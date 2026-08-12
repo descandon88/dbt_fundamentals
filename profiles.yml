@@ -1,0 +1,19 @@
+default:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      user: admin
+      password: admin123
+      port: 5434
+      dbname: DBT_POSTGRES
+      schema: public
+    docker:
+      type: postgres
+      host: postgres
+      user: admin
+      password: admin123
+      port: 5432
+      dbname: DBT_POSTGRES
+      schema: public
