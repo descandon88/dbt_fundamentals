@@ -12,6 +12,7 @@ services:
 
   dbt:
     image: ghcr.io/dbt-labs/dbt-postgres:latest
+    entrypoint: ["tail", "-f", "/dev/null"]
     volumes:
       - .:/usr/app
     working_dir: /usr/app

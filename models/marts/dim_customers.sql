@@ -1,30 +1,15 @@
-{{
-    config(
-        materialized = 'view'
-    )
-}}
 
 
 with customers as (
 
---    select
---       id as customer_id,
---        first_name,
---        last_name
- 
-select * from {{ ref('stg_jaffle_shop_customers') }}
+     select * from {{ ref('stg_jaffle_shop__customers') }}
 
 ),
 
-orders as (
+orders as ( 
 
---    select
---        id as order_id,
---        user_id as customer_id,
---        order_date,
---        status
--- source('jaffle_shop', 'orders') 
-select  * from  {{ ref('stg_jaffle_shop_orders') }}
+    select * from {{ ref('stg_jaffle_shop__orders') }}
+
 ),
 
 customer_orders as (
@@ -42,7 +27,6 @@ customer_orders as (
 
 ),
 
-
 final as (
 
     select
@@ -51,7 +35,8 @@ final as (
         customers.last_name,
         customer_orders.first_order_date,
         customer_orders.most_recent_order_date,
-        coalesce(customer_orders.number_of_orders, 0) as number_of_orders
+        coalesce (customer_orders.number_of_orders, 0) 
+        as number_of_orders
 
     from customers
 
