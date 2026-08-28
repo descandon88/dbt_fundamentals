@@ -12,6 +12,7 @@ services:
 
   dbt:
     image: ghcr.io/dbt-labs/dbt-postgres:latest
+    platform: linux/amd64
     entrypoint: ["tail", "-f", "/dev/null"]
     volumes:
       - .:/usr/app

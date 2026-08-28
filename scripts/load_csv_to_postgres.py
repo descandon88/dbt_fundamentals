@@ -48,7 +48,7 @@ def load_csv(cur, csv_path):
 
     print(f"Loading {os.path.basename(csv_path)} -> table \"{table}\" ({len(columns)} columns)")
 
-    cur.execute(f'DROP TABLE IF EXISTS "{table}"')
+    cur.execute(f'DROP TABLE IF EXISTS "{table}" CASCADE')
     col_defs = ", ".join(f'"{col}" TEXT' for col in columns)
     cur.execute(f'CREATE TABLE "{table}" ({col_defs})')
 
