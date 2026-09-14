@@ -7,7 +7,7 @@ default:
       user: admin
       password: admin123
       port: 5434
-      dbname: DBT_POSTGRES
+      dbname: raw
       schema: public
     docker:
       type: postgres
@@ -15,5 +15,5 @@ default:
       user: admin
       password: admin123
       port: 5432
-      dbname: DBT_POSTGRES
+      dbname: raw
       schema: public

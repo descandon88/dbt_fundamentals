@@ -23,8 +23,16 @@ DB_PARAMS = dict(
     port=os.environ.get("PGPORT", "5434"),
     user=os.environ.get("PGUSER", "admin"),
     password=os.environ.get("PGPASSWORD", "admin123"),
-    dbname=os.environ.get("PGDATABASE", "DBT_POSTGRES"),
+    dbname=os.environ.get("PGDATABASE", "raw"),
 )
+
+SCHEMA = os.environ.get("PGSCHEMA", "jaffle_shop")
+
+# (schema, table) overrides for specific source tables, keyed by the
+# filename-derived table name.
+TABLE_OVERRIDES = {
+    "stripe_payments": ("stripe", "payment"),
+}
 
 
 def table_name_for(csv_path):
@@ -34,30 +42,36 @@ def table_name_for(csv_path):
     return stem
 
 
+def target_for(csv_path):
+    table = table_name_for(csv_path)
+    return TABLE_OVERRIDES.get(table, (SCHEMA, table))
+
+
 def sanitize_column(name):
     name = re.sub(r"[^a-zA-Z0-9]+", "_", name.strip()).strip("_").lower()
     return name or "col"
 
 
 def load_csv(cur, csv_path):
-    table = table_name_for(csv_path)
+    schema, table = target_for(csv_path)
 
     with open(csv_path, encoding="utf-8-sig", newline="") as f:
         header = next(csv.reader(f))
     columns = [sanitize_column(col) for col in header]
 
-    print(f"Loading {os.path.basename(csv_path)} -> table \"{table}\" ({len(columns)} columns)")
+    print(f"Loading {os.path.basename(csv_path)} -> table \"{schema}\".\"{table}\" ({len(columns)} columns)")
 
-    cur.execute(f'DROP TABLE IF EXISTS "{table}" CASCADE')
+    cur.execute(f'CREATE SCHEMA IF NOT EXISTS "{schema}"')
+    cur.execute(f'DROP TABLE IF EXISTS "{schema}"."{table}" CASCADE')
     col_defs = ", ".join(f'"{col}" TEXT' for col in columns)
-    cur.execute(f'CREATE TABLE "{table}" ({col_defs})')
+    cur.execute(f'CREATE TABLE "{schema}"."{table}" ({col_defs})')
 
     with open(csv_path, encoding="utf-8-sig", newline="") as f:
         cur.copy_expert(
-            f'COPY "{table}" FROM STDIN WITH (FORMAT csv, HEADER true)', f
+            f'COPY "{schema}"."{table}" FROM STDIN WITH (FORMAT csv, HEADER true)', f
         )
 
-    return table
+    return schema, table
 
 
 def main():
@@ -69,10 +83,10 @@ def main():
     conn = psycopg2.connect(**DB_PARAMS)
     conn.autocommit = False
     try:
-        tables = []
+        targets = []
         with conn.cursor() as cur:
             for csv_path in csv_files:
-                tables.append(load_csv(cur, csv_path))
+                targets.append(load_csv(cur, csv_path))
         conn.commit()
     except Exception:
         conn.rollback()
@@ -84,10 +98,10 @@ def main():
     conn = psycopg2.connect(**DB_PARAMS)
     try:
         with conn.cursor() as cur:
-            for table in tables:
-                cur.execute(f'SELECT COUNT(*) FROM "{table}"')
+            for schema, table in targets:
+                cur.execute(f'SELECT COUNT(*) FROM "{schema}"."{table}"')
                 count = cur.fetchone()[0]
-                print(f"  {table}: {count}")
+                print(f"  {schema}.{table}: {count}")
     finally:
         conn.close()
 

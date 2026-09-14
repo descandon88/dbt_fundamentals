@@ -2,8 +2,8 @@ version: 2
 
 sources:
   - name: jaffle_shop
-    schema: public
+    database: raw
+    schema: jaffle_shop
     tables:
       - name: jaffle_shop_customers
       - name: jaffle_shop_orders
-      - name: stripe_payments

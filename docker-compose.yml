@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123
-      POSTGRES_DB: DBT_POSTGRES
+      POSTGRES_DB: raw
     ports:
       - "5434:5432"
     volumes:
